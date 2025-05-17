@@ -18,6 +18,156 @@ RSpec.describe Langchain::Assistant::LLM::Adapters::GoogleGemini do
         system: "Instructions"
       })
     end
+
+    it "merges function responses" do
+      messages = [
+        {
+          role: "user",
+          parts: [{text: "find me stuff"}]
+        },
+        {
+          role: "model",
+          parts: [
+            {
+              functionCall: {
+                name: "api__search",
+                args: {
+                  query: "query a"
+                }
+              }
+            },
+            {
+              functionCall: {
+                name: "api__search",
+                args: {
+                  query: "query b"
+                }
+              }
+            },
+            {
+              functionCall: {
+                name: "api__search",
+                args: {
+                  query: "query c"
+                }
+              }
+            }
+          ]
+        },
+        {
+          role: "function",
+          parts: [
+            {
+              functionResponse: {
+                name: "api__search",
+                response: {
+                  name: "api__search",
+                  content: "result a"
+                }
+              }
+            }
+          ]
+        },
+        {
+          role: "function",
+          parts: [
+            {
+              functionResponse: {
+                name: "api__search",
+                response: {
+                  name: "api__search",
+                  content: "result b"
+                }
+              }
+            }
+          ]
+        },
+        {
+          role: "function",
+          parts: [
+            {
+              functionResponse: {
+                name: "api__search",
+                response: {
+                  name: "api__search",
+                  content: "result c"
+                }
+              }
+            }
+          ]
+        }
+      ]
+
+      expect(
+        subject.build_chat_params(messages: messages)[:message]
+      ).to eq([
+          {
+            role: "user",
+            parts: [{text: "find me stuff"}]
+          },
+          {
+            role: "model",
+            parts: [
+              {
+                functionCall: {
+                  name: "api__search",
+                  args: {
+                    query: "query a"
+                  }
+                }
+              },
+              {
+                functionCall: {
+                  name: "api__search",
+                  args: {
+                    query: "query b"
+                  }
+                }
+              },
+              {
+                functionCall: {
+                  name: "api__search",
+                  args: {
+                    query: "query c"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            role: "function",
+            parts: [
+              {
+                functionResponse: {
+                  name: "api__search",
+                  response: {
+                    name: "api__search",
+                    content: "result a"
+                  }
+                }
+              },
+              {
+                functionResponse: {
+                  name: "api__search",
+                  response: {
+                    name: "api__search",
+                    content: "result b"
+                  }
+                }
+              },
+              {
+                functionResponse: {
+                  name: "api__search",
+                  response: {
+                    name: "api__search",
+                    content: "result c"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      )
   end
 
   describe "#support_system_message?" do
