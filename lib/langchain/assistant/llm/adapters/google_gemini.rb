@@ -20,9 +20,11 @@ module Langchain
             tool_choice:,
             parallel_tool_calls:
           )
-            Langchain.logger.warn "WARNING: `parallel_tool_calls:` is not supported by Google Gemini currently" if parallel_tool_calls
+            Langchain.logger.warn("WARNING: `parallel_tool_calls:` is not supported by Google Gemini currently") if parallel_tool_calls
 
-            params = {messages: messages}
+            processed_messages = merge_function_responses(messages)
+
+            params = {messages: processed_messages}
             if tools.any?
               params[:tools] = build_tools(tools)
               params[:system] = instructions if instructions
@@ -94,6 +96,22 @@ module Langchain
             else
               {function_calling_config: {mode: "any", allowed_function_names: [choice]}}
             end
+          end
+
+          def merge_function_responses(messages)
+            processed_messages = []
+
+            messages.each.with_index do |message, index|
+              previous_message = processed_messages.last
+
+              if previous_message&.dig(:role) == 'function' && message[:role] == 'function'
+                previous_message[:parts].concat message[:parts]
+              else
+                processed_messages << message
+              end
+            end
+
+            processed_messages
           end
         end
       end
