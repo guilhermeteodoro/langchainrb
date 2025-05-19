@@ -168,6 +168,7 @@ RSpec.describe Langchain::Assistant::LLM::Adapters::GoogleGemini do
           }
         ]
       )
+    end
   end
 
   describe "#support_system_message?" do
